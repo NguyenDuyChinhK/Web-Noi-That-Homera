@@ -1,0 +1,127 @@
+.item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.checkout-page {
+    background-color: #f5f5f5;
+
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .checkout-title {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    :global(.ant-card) {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+
+        :global(.ant-card-head) {
+            background-color: #f9f9f9;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+    }
+
+    .order-items {
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #f0f0f0;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .item-info {
+                display: flex;
+                flex-direction: column;
+
+                :global(.ant-typography + .ant-typography) {
+                    margin-top: 4px;
+                }
+            }
+        }
+    }
+
+    .order-summary {
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+
+            &.total {
+                margin-top: 8px;
+                font-size: 16px;
+            }
+        }
+    }
+
+    .payment-option {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+
+        img,
+        :global(.anticon) {
+            margin-right: 12px;
+        }
+
+        .payment-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+    }
+
+    :global(.ant-radio-wrapper) {
+        width: 100%;
+        margin-bottom: 8px;
+
+        &:hover {
+            .payment-option {
+                background-color: #f9f9f9;
+                border-radius: 4px;
+            }
+        }
+
+        &:global(.ant-radio-wrapper-checked) {
+            .payment-option {
+                background-color: #e6f7ff;
+                border-radius: 4px;
+                padding: 8px;
+            }
+        }
+    }
+
+    :global(.ant-form-item-label) {
+        font-weight: 500;
+    }
+
+    :global(.ant-divider) {
+        margin: 16px 0;
+    }
+
+    :global(.ant-btn-primary) {
+        height: 48px;
+        font-size: 16px;
+        border-radius: 4px;
+        margin-top: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-container {
+            padding: 20px 15px;
+        }
+    }
+}
