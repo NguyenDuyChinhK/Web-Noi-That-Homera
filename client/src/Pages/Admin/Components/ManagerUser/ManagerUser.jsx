@@ -2,20 +2,31 @@ import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ManagerUser.module.scss';
 import { Table, Switch, message, Typography, Space, Button } from 'antd';
-import { requestGetAllUser, requestUpdateUser, requestUpdateUserAdmin } from '../../../../config/request';
+import { requestGetAllUser, requestUpdateUser, requestUpdateUserAdmin, requestAuth } from '../../../../config/request';
 
 const { Title } = Typography;
 const cx = classNames.bind(styles);
 
 function ManagerUser() {
     const [users, setUsers] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [updateLoading, setUpdateLoading] = useState({});
 
     useEffect(() => {
         document.title = 'Quản lý tài khoản';
         fetchUsers();
+        fetchCurrentUser();
     }, []);
+
+    const fetchCurrentUser = async () => {
+        try {
+            const res = await requestAuth();
+            setCurrentUser(res.metadata);
+        } catch (error) {
+            console.error('Không lấy được thông tin user hiện tại');
+        }
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -31,17 +42,19 @@ function ManagerUser() {
     };
 
     const handleToggleAdmin = async (checked, userId) => {
-        console.log(userId);
-
         setUpdateLoading((prev) => ({ ...prev, [userId]: true }));
         try {
-            await requestUpdateUserAdmin({ id: userId, isAdminUser: checked ? true : false });
-            message.success('Cập nhật quyền thành công');
+            await requestUpdateUserAdmin({
+                id: userId,
+                isAdminUser: checked,
+            });
 
+            message.success('Cập nhật quyền thành công');
             fetchUsers();
         } catch (error) {
-            message.error('Cập nhật quyền thất bại');
-            console.error(error);
+            const backendMessage = error.response?.data?.message || 'Cập nhật quyền thất bại';
+
+            message.error(backendMessage);
         } finally {
             setUpdateLoading((prev) => ({ ...prev, [userId]: false }));
         }
@@ -60,17 +73,27 @@ function ManagerUser() {
         },
         {
             title: 'Quyền quản trị',
-            key: 'isAdmin',
-            render: (_, record) => (
-                <Switch
-                    checked={record.isAdmin}
-                    onChange={(checked) => handleToggleAdmin(checked, record._id)}
-                    loading={updateLoading[record.id]}
-                    checkedChildren="Admin"
-                    unCheckedChildren="User"
-                />
-            ),
+            render: (_, record) => {
+                if (!currentUser) return null;
+
+                const isSelf = currentUser._id === record._id;
+
+                if (isSelf) {
+                    return <span>—</span>; // hoặc "Bản thân"
+                }
+
+                return (
+                    <Switch
+                        checked={record.isAdmin}
+                        onChange={(checked) => handleToggleAdmin(checked, record._id)}
+                        loading={updateLoading[record._id]}
+                        checkedChildren="Admin"
+                        unCheckedChildren="User"
+                    />
+                );
+            },
         },
+
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
@@ -88,7 +111,7 @@ function ManagerUser() {
                 <Table
                     columns={columns}
                     dataSource={users}
-                    rowKey="id"
+                    rowKey="_id"
                     loading={loading}
                     pagination={{
                         pageSize: 10,

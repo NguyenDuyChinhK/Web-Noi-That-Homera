@@ -4,12 +4,9 @@ const modelProduct = require('../models/products.model');
 const { BadRequestError } = require('../core/error.response');
 const { Created, OK } = require('../core/success.response');
 
-function calculateItemPrice(price, quantity, discount) {
-    if (discount) {
-        return Number(price * quantity - (price * quantity * discount) / 100);
-    } else {
-        return Number(price * quantity);
-    }
+function calculateItemPrice(price, quantity, discount = 0) {
+    const total = price * quantity;
+    return discount > 0 ? Math.round(total * (1 - discount / 100)) : total;
 }
 
 class controllerCartUser {
@@ -17,111 +14,77 @@ class controllerCartUser {
         const { id } = req.user;
         const { productId, quantity } = req.body;
 
-        if (!id || !productId) {
-            throw new BadRequestError('Missing required fields');
+        if (!id || !productId || !quantity) {
+            throw new BadRequestError('Thiếu dữ liệu');
         }
 
-        // Tìm thông tin sản phẩm
-        const findDataProduct = await modelProduct.findById(productId);
-        if (!findDataProduct) {
+        const product = await modelProduct.findById(productId);
+        if (!product) {
             throw new BadRequestError('Sản phẩm không tồn tại');
         }
 
-        // Hàm tính tổng giá
-
-        // Tính giá cho sản phẩm hiện tại
-        const itemPrice = calculateItemPrice(findDataProduct?.price, quantity, findDataProduct.discount);
-
-        // Tìm giỏ hàng của người dùng
         const findCartUser = await modelCart.findOne({ userId: id });
 
         if (findCartUser) {
-            // Nếu đã có giỏ hàng
             const findProduct = findCartUser.product.find((item) => item.productId.toString() === productId);
 
             if (findProduct) {
-                // Nếu sản phẩm đã có trong giỏ hàng, cập nhật số lượng
                 findProduct.quantity += quantity;
             } else {
-                // Nếu sản phẩm chưa có trong giỏ hàng, thêm mới
                 findCartUser.product.push({ productId, quantity });
             }
 
-            // Tính lại tổng giá của giỏ hàng
             let totalPrice = 0;
 
-            // Lấy toàn bộ thông tin sản phẩm trong giỏ hàng
-            const cartItems = await Promise.all(
-                findCartUser.product.map(async (item) => {
-                    const product = await modelProduct.findById(item.productId);
-                    return {
-                        item,
-                        product,
-                    };
-                }),
-            );
-
-            // Tính tổng giá
-            for (const { item, product } of cartItems) {
-                totalPrice += calculateItemPrice(product?.price, item?.quantity, product?.discount);
+            for (const item of findCartUser.product) {
+                const p = await modelProduct.findById(item.productId);
+                totalPrice += calculateItemPrice(p.price, item.quantity, p.discount);
             }
 
             findCartUser.totalPrice = totalPrice;
             await findCartUser.save();
 
-            new OK({
+            return new OK({
                 message: 'Thêm sản phẩm vào giỏ hàng thành công',
-                statusCode: 200,
                 metadata: findCartUser,
             }).send(res);
-        } else {
-            // Nếu chưa có giỏ hàng, tạo mới
-            const cart = await modelCart.create({
-                userId: id,
-                product: [
-                    {
-                        productId,
-                        quantity,
-                    },
-                ],
-                totalPrice: itemPrice,
-            });
-
-            new Created({
-                message: 'Thêm sản phẩm vào giỏ hàng thành công',
-                statusCode: 201,
-                metadata: cart,
-            }).send(res);
         }
+
+        const itemPrice = calculateItemPrice(product.price, quantity, product.discount);
+
+        const cart = await modelCart.create({
+            userId: id,
+            product: [{ productId, quantity }],
+            totalPrice: itemPrice,
+        });
+
+        new Created({
+            message: 'Thêm sản phẩm vào giỏ hàng thành công',
+            metadata: cart,
+        }).send(res);
     }
 
     async getCart(req, res) {
         const { id } = req.user;
-        const findCartUser = await modelCart.findOne({ userId: id });
+        const cart = await modelCart.findOne({ userId: id });
 
-        if (!findCartUser) {
+        if (!cart) {
             return new OK({
                 message: 'Giỏ hàng trống',
-                statusCode: 200,
-                metadata: [],
+                metadata: { cartItems: [], totalPrice: 0 },
             }).send(res);
         }
 
         const cartItems = await Promise.all(
-            findCartUser.product.map(async (item) => {
+            cart.product.map(async (item) => {
                 const product = await modelProduct.findById(item.productId);
-                return {
-                    item,
-                    product,
-                };
+                return { item, product };
             }),
         );
 
-        const totalPrice = findCartUser.totalPrice;
         new OK({
             message: 'Lấy giỏ hàng thành công',
-            statusCode: 200,
-            metadata: { cartItems, totalPrice },
+            metadata: { cartItems, totalPrice: cart.totalPrice },
         }).send(res);
     }
 
@@ -129,37 +92,69 @@ class controllerCartUser {
         const { id } = req.user;
         const { productId, quantity } = req.body;
 
-        const findCartUser = await modelCart.findOne({ userId: id });
-        if (!findCartUser) {
+        if (quantity < 1) {
+            throw new BadRequestError('Số lượng không hợp lệ');
+        }
+
+        const cart = await modelCart.findOne({ userId: id });
+        if (!cart) {
             throw new BadRequestError('Giỏ hàng không tồn tại');
         }
 
-        const findProduct = findCartUser.product.find((item) => item.productId.toString() === productId);
-        if (!findProduct) {
-            throw new BadRequestError('Sản phẩm không tồn tại trong giỏ hàng');
+        const item = cart.product.find((p) => p.productId.toString() === productId);
+        if (!item) {
+            throw new BadRequestError('Sản phẩm không tồn tại trong giỏ');
         }
 
-        // Lấy thông tin sản phẩm để tính giá
-        const productInfo = await modelProduct.findById(productId);
-        if (!productInfo) {
-            throw new BadRequestError('Không tìm thấy thông tin sản phẩm');
+        const product = await modelProduct.findById(productId);
+        if (!product) {
+            throw new BadRequestError('Sản phẩm không tồn tại');
         }
 
-        // Tính giá cũ của sản phẩm để trừ đi
-        const oldItemPrice = calculateItemPrice(productInfo.price, findProduct.quantity, productInfo.discount);
+        const oldPrice = calculateItemPrice(product.price, item.quantity, product.discount);
+        const newPrice = calculateItemPrice(product.price, quantity, product.discount);
 
-        // Tính giá mới của sản phẩm sau khi cập nhật số lượng
-        const newItemPrice = calculateItemPrice(productInfo.price, quantity, productInfo.discount);
-        await modelProduct.findByIdAndUpdate(productId, { $inc: { stock: findProduct.quantity - quantity } });
-        // Cập nhật số lượng và tổng giá
-        findProduct.quantity = quantity;
-        findCartUser.totalPrice = findCartUser.totalPrice - oldItemPrice + newItemPrice;
-        await findCartUser.save();
+        item.quantity = quantity;
+        cart.totalPrice = cart.totalPrice - oldPrice + newPrice;
+
+        if (cart.totalPrice < 0) cart.totalPrice = 0;
+
+        await cart.save();
 
         new OK({
-            message: 'Cập nhật số lượng sản phẩm thành công',
-            statusCode: 200,
-            metadata: findCartUser,
+            message: 'Cập nhật số lượng thành công',
+            metadata: cart,
+        }).send(res);
+    }
+
+    async deleteProductCart(req, res) {
+        const { id } = req.user;
+        const { productId } = req.body;
+
+        const cart = await modelCart.findOne({ userId: id });
+        if (!cart) {
+            throw new BadRequestError('Giỏ hàng không tồn tại');
+        }
+
+        const index = cart.product.findIndex((item) => item.productId.toString() === productId);
+        if (index === -1) {
+            throw new BadRequestError('Sản phẩm không tồn tại trong giỏ');
+        }
+
+        const product = await modelProduct.findById(productId);
+        const removedItem = cart.product[index];
+
+        const removedPrice = calculateItemPrice(product.price, removedItem.quantity, product.discount);
+
+        cart.product.splice(index, 1);
+        cart.totalPrice -= removedPrice;
+        if (cart.totalPrice < 0) cart.totalPrice = 0;
+
+        await cart.save();
+
+        new OK({
+            message: 'Xóa sản phẩm khỏi giỏ hàng thành công',
+            metadata: cart,
         }).send(res);
     }
 
@@ -167,21 +162,21 @@ class controllerCartUser {
         const { id } = req.user;
         const { fullName, phone, address, note } = req.body;
 
-        const findCartUser = await modelCart.findOne({ userId: id });
-        if (!findCartUser) {
+        const cart = await modelCart.findOne({ userId: id });
+        if (!cart) {
             throw new BadRequestError('Giỏ hàng không tồn tại');
         }
 
-        findCartUser.fullName = fullName;
-        findCartUser.phone = phone;
-        findCartUser.address = address;
-        findCartUser.note = note;
-        await findCartUser.save();
+        cart.fullName = fullName;
+        cart.phone = phone;
+        cart.address = address;
+        cart.note = note;
+
+        await cart.save();
 
         new OK({
             message: 'Cập nhật thông tin giỏ hàng thành công',
-            statusCode: 200,
-            metadata: findCartUser,
+            metadata: cart,
         }).send(res);
     }
 }

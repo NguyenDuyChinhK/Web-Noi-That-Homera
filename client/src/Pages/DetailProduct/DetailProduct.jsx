@@ -11,6 +11,7 @@ import { useEffect, useState, useRef } from 'react';
 import Loading from '../../Components/Loading/Loading';
 import CardBody from '../../Components/CardBody/CardBody';
 import { requestCreateCart } from '../../config/request';
+
 import { useStore } from '../../hooks/userStore';
 const cx = classNames.bind(styles);
 
@@ -54,17 +55,6 @@ function DetailProduct() {
         });
         await getCart();
         message.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
-    };
-
-    const handleBuyNow = async () => {
-        const data = {
-            productId: product._id,
-            quantity: 1,
-        };
-        await requestCreateCart(data);
-        await getCart();
-        navigate('/checkout');
-        message.success('Đang chuyển đến trang thanh toán');
     };
 
     const calculateDiscountedPrice = (price, discount) => {
@@ -173,7 +163,7 @@ function DetailProduct() {
                                                     type="primary"
                                                     icon={<ShoppingCartOutlined />}
                                                     size="large"
-                                                    className={cx('buy-now')}
+                                                    className={cx('require-login-btn')}
                                                 >
                                                     Đăng nhập để thêm vào giỏ hàng
                                                 </Button>
@@ -189,14 +179,6 @@ function DetailProduct() {
                                                 disabled={product?.stock <= 0}
                                             >
                                                 THÊM VÀO GIỎ
-                                            </Button>
-
-                                            <Button
-                                                className={cx('buy-now')}
-                                                onClick={handleBuyNow}
-                                                disabled={product?.stock <= 0}
-                                            >
-                                                MUA NGAY
                                             </Button>
                                         </>
                                     )}

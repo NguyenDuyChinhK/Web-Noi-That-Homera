@@ -38,15 +38,22 @@ function CheckOut() {
 
     const { dataCart, getCart } = useStore();
     // Mock order data (would normally come from cart or context)
-    const orderItems = dataCart?.cartItems?.map((item) => ({
-        id: item.product._id,
-        name: item.product.name,
-        price: item?.product.discount
-            ? item?.product.price - (item?.product.discount * item?.product.price) / 100
-            : item?.product.price,
-        quantity: item.item.quantity,
-        image: item?.product.images.split(',')[0],
-    }));
+    const orderItems = dataCart?.cartItems?.map((item) => {
+        const unitPrice = item?.product.discount
+            ? item.product.price - (item.product.discount * item.product.price) / 100
+            : item.product.price;
+
+        const quantity = item.item.quantity;
+
+        return {
+            id: item.product._id,
+            name: item.product.name,
+            unitPrice,
+            quantity,
+            totalPrice: unitPrice * quantity,
+            image: item.product.images.split(',')[0],
+        };
+    });
 
     const onAddressSearch = (value) => {
         if (!value || value.length < 3) {
@@ -130,7 +137,7 @@ function CheckOut() {
                     <Row gutter={[32, 24]}>
                         {/* Left Column - Customer Information */}
                         <Col xs={24} lg={12}>
-                            <Card title="Thông tin giao hàng" bordered={false}>
+                            <Card title="Thông tin giao hàng" variant="borderless">
                                 <Form.Item
                                     name="fullName"
                                     label="Họ và tên"
@@ -178,7 +185,7 @@ function CheckOut() {
 
                         {/* Right Column - Order Summary & Payment */}
                         <Col xs={24} lg={12}>
-                            <Card title="Đơn hàng của bạn" bordered={false}>
+                            <Card title="Đơn hàng của bạn" variant="borderless">
                                 <div className={cx('order-items')}>
                                     {orderItems?.map((item) => (
                                         <div key={item.id} className={cx('order-item')}>
@@ -187,7 +194,10 @@ function CheckOut() {
                                                 <Text strong>{item.name}</Text>
                                                 <Text type="secondary">Số lượng : x {item.quantity}</Text>
                                             </div>
-                                            <Text>{item.price?.toLocaleString('vi-VN')}₫</Text>
+                                            <Text type="secondary">
+                                                {item.unitPrice.toLocaleString('vi-VN')}₫ × {item.quantity}
+                                            </Text>
+                                            <Text strong>{item.totalPrice.toLocaleString('vi-VN')}₫</Text>
                                         </div>
                                     ))}
                                 </div>

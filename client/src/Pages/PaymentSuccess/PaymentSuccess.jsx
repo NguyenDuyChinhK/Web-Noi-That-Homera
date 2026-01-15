@@ -102,7 +102,6 @@ function PaymentSuccess() {
             key: 'name',
             render: (text, record) => (
                 <div className={cx('product-info')}>
-                    {/* Sửa record.images thành record.image ở dòng dưới đây */}
                     <img src={record.image} alt={text} className={cx('product-image')} />
                     <span>{text}</span>
                 </div>

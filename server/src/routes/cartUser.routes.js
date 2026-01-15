@@ -4,7 +4,6 @@ const router = express.Router();
 const { asyncHandler, authUser, authAdmin } = require('../auth/checkAuth');
 
 const controllerCartUser = require('../controllers/cartUser.controller');
-
 router.post('/api/create-cart', authUser, asyncHandler(controllerCartUser.addToCart));
 router.get('/api/get-cart', authUser, asyncHandler(controllerCartUser.getCart));
 router.post('/api/delete-product-cart', authUser, asyncHandler(controllerCartUser.deleteProductCart));

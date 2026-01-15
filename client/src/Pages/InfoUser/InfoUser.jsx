@@ -69,7 +69,7 @@ function InfoUser() {
                 return (
                     <Card
                         title="Thông tin cá nhân"
-                        bordered={false}
+                        variant="borderless"
                         extra={
                             isEditing ? (
                                 <div className={cx('edit-buttons')}>
@@ -156,7 +156,7 @@ function InfoUser() {
                 );
             case '2':
                 return (
-                    <Card title="Quản lý đơn hàng" bordered={false}>
+                    <Card title="Quản lý đơn hàng" variant="borderless">
                         <OrderUser />
                     </Card>
                 );

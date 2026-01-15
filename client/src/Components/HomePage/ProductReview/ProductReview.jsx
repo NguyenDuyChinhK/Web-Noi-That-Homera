@@ -40,7 +40,7 @@ function ProductReview() {
             <div>
                 <Slider {...settings}>
                     {previewProduct.map((review) => (
-                        <div className={cx('review')}>
+                        <div key={review._id} className={cx('review')}>
                             <img src={review.product.image} alt="" />
                             <div className={cx('review-content')}>
                                 <h3>{review.user.name}</h3>

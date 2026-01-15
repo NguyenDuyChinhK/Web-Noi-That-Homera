@@ -31,32 +31,21 @@ class controllerPayments {
 
         // Kiểm tra tồn kho cho tất cả sản phẩm trong giỏ hàng
         const stockErrors = [];
+
         for (const item of findCart.product) {
             const product = await modelProduct.findById(item.productId);
-            if (!product) {
-                stockErrors.push(`Sản phẩm với ID ${item.productId} không tồn tại`);
-                continue;
-            }
+            if (!product) continue;
+
             if (product.stock < item.quantity) {
-                throw new BadRequestError('Sản phẩm không đủ hàng trong kho');
+                stockErrors.push(`${product.name}: còn ${product.stock}, bạn chọn ${item.quantity}`);
             }
         }
 
         // Nếu có lỗi về tồn kho, trả về lỗi
         if (stockErrors.length > 0) {
-            throw new BadRequestError(stockErrors.join('; '));
+            throw new BadRequestError(stockErrors.join(' | '));
         }
-
         if (typePayment === 'COD') {
-            // Trừ số lượng sản phẩm trong kho
-            for (const item of findCart.product) {
-                await modelProduct.findByIdAndUpdate(
-                    item.productId,
-                    { $inc: { stock: -item.quantity } },
-                    { new: true },
-                );
-            }
-
             const payment = await modelPayments.create({
                 userId: id,
                 product: findCart.product,
@@ -194,15 +183,6 @@ class controllerPayments {
                     return res.status(404).json({ message: 'Không tìm thấy giỏ hàng' });
                 }
 
-                // Trừ số lượng sản phẩm trong kho
-                for (const item of findCart.product) {
-                    await modelProduct.findByIdAndUpdate(
-                        item.productId,
-                        { $inc: { stock: -item.quantity } },
-                        { new: true },
-                    );
-                }
-
                 const newPayment = new modelPayments({
                     fullName: findCart.fullName,
                     phone: findCart.phone,
@@ -235,15 +215,6 @@ class controllerPayments {
                 return res.status(404).json({ message: 'Không tìm thấy giỏ hàng' });
             }
 
-            // Trừ số lượng sản phẩm trong kho
-            for (const item of findCart.product) {
-                await modelProduct.findByIdAndUpdate(
-                    item.productId,
-                    { $inc: { stock: -item.quantity } },
-                    { new: true },
-                );
-            }
-
             const newPayment = new modelPayments({
                 fullName: findCart.fullName,
                 phone: findCart.phone,
@@ -273,7 +244,7 @@ class controllerPayments {
         const products = await Promise.all(
             findPayment.product.map(async (item) => {
                 const product = await modelProduct.findOne({ _id: item.productId });
-                const price = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price;
+                const price = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price; //giá sau khi trừ giảm giá
                 return {
                     id: item.productId,
                     name: product.name,
@@ -323,7 +294,7 @@ class controllerPayments {
                                 name: product.name,
                                 price: price,
                                 quantity: item.quantity,
-                                images: product.images,
+                                image: product.images.split(',')[0],
                             };
                         }),
                     );
@@ -362,13 +333,6 @@ class controllerPayments {
             throw new BadRequestError('Không tìm thấy đơn hàng');
         }
 
-        // Hoàn lại số lượng sản phẩm vào kho khi hủy đơn
-        if (findOrder.status !== 'cancelled' && findOrder.status !== 'delivered') {
-            for (const item of findOrder.product) {
-                await modelProduct.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } }, { new: true });
-            }
-        }
-
         findOrder.status = 'cancelled';
         await findOrder.save();
         new OK({ message: 'Đơn hàng đã được hủy bỏ' }).send(res);
@@ -390,18 +354,45 @@ class controllerPayments {
 
         const findOrder = await modelPayments.findOne({ _id: idOrder });
 
-        findOrder.status = status;
-        await findOrder.save();
-
-        if (status === 'delivered') {
+        // CHỈ xử lý khi chuyển sang delivered
+        if (status === 'delivered' && findOrder.status !== 'delivered') {
             await Promise.all(
                 findOrder.product.map(async (item) => {
-                    const product = await modelProduct.findOne({ _id: item.productId });
-                    product.soldCount += item.quantity;
-                    await product.save();
+                    await modelProduct.findByIdAndUpdate(
+                        item.productId,
+                        {
+                            $inc: {
+                                stock: -item.quantity,
+                                soldCount: item.quantity,
+                            },
+                        },
+                        { new: true },
+                    );
                 }),
             );
         }
+
+        // Nếu từ delivered -> cancelled thì rollback
+        if (status === 'cancelled' && findOrder.status === 'delivered') {
+            await Promise.all(
+                findOrder.product.map(async (item) => {
+                    await modelProduct.findByIdAndUpdate(
+                        item.productId,
+                        {
+                            $inc: {
+                                stock: item.quantity,
+                                soldCount: -item.quantity,
+                            },
+                        },
+                        { new: true },
+                    );
+                }),
+            );
+        }
+
+        findOrder.status = status;
+        await findOrder.save();
+
         new OK({ message: 'Cập nhật trạng thái đơn hàng thành công' }).send(res);
     }
 }

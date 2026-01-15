@@ -20,9 +20,15 @@ function Category() {
     const [discountFilter, setDiscountFilter] = useState('0');
     const { id } = useParams();
 
-    const url = `/api/get-product-by-category?category=${id}${priceFilter !== '0' ? `&price=${priceFilter}` : ''}${
-        discountFilter !== '0' ? `&discount=${discountFilter}` : ''
-    }`;
+    const url =
+        id === 'all'
+            ? `/api/get-all-product${priceFilter !== '0' ? `?price=${priceFilter}` : ''}${
+                  discountFilter !== '0' ? `${priceFilter !== '0' ? '&' : '?'}discount=${discountFilter}` : ''
+              }`
+            : `/api/get-product-by-category?category=${id}${priceFilter !== '0' ? `&price=${priceFilter}` : ''}${
+                  discountFilter !== '0' ? `&discount=${discountFilter}` : ''
+              }`;
+
     const { data, error, loading, reFetch } = useFetch(url);
 
     useEffect(() => {
@@ -69,24 +75,23 @@ function Category() {
                                 style={{ width: 300, marginRight: 10 }}
                                 onChange={handlePriceChange}
                                 options={[
-                                    { value: '0', label: 'Chọn giá' },
-                                    { value: '1', label: 'Dưới 500.000 VNĐ' },
-                                    { value: '2', label: 'Từ 500.000 VNĐ - 1.000.000 VNĐ' },
-                                    { value: '3', label: 'Từ 1.000.000 VNĐ - 2.000.000 VNĐ' },
-                                    { value: '5', label: 'Trên 5.000.000 VNĐ' },
+                                    { value: '0', label: 'Tất cả mức giá' },
+                                    { value: '1', label: 'Dưới 1.000.000 VNĐ' },
+                                    { value: '2', label: 'Từ 1.000.000 – 5.000.000 VNĐ' },
+                                    { value: '3', label: 'Từ 5.000.000 – 20.000.000 VNĐ' },
+                                    { value: '4', label: 'Trên 20.000.000 VNĐ' },
                                 ]}
                             />
-
                             <Select
                                 defaultValue="0"
                                 style={{ width: 300, marginRight: 10 }}
                                 onChange={handleDiscountChange}
                                 options={[
-                                    { value: '0', label: 'Giảm giá' },
-                                    { value: '1', label: '10%' },
-                                    { value: '2', label: '20%' },
-                                    { value: '3', label: '30%' },
-                                    { value: '4', label: '40%' },
+                                    { value: '0', label: 'Tất cả sản phẩm (có & không giảm giá)' },
+                                    { value: 'all', label: 'Sản phẩm đang giảm giá' },
+                                    { value: '1', label: 'Giảm từ 10% – 25%' },
+                                    { value: '2', label: 'Giảm từ 25% – 50%' },
+                                    { value: '3', label: 'Giảm từ 50% trở lên' },
                                 ]}
                             />
                         </div>

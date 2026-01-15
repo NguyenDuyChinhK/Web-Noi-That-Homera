@@ -7,7 +7,7 @@ const cx = classNames.bind(styles);
 function Loading() {
     return (
         <div className={cx('wrapper')}>
-            <Spin size="large" />
+            <Spin size="large" fullscreen />
         </div>
     );
 }

@@ -77,32 +77,31 @@ class controllerProducts {
     async getProductByCategory(req, res) {
         const { category, price, discount } = req.query;
 
-        let query = { category };
+        let products = await modelProduct.find({ category });
 
-        // Add discount filter
         if (discount && discount !== '0') {
-            const discountValue = parseInt(discount) * 10; // Convert to percentage (1 -> 10%, 2 -> 20%, etc.)
-            query.discount = discountValue;
+            products = products.filter((p) => {
+                if (discount === 'all') return p.discount > 0;
+                if (discount === '1') return p.discount >= 10 && p.discount < 25;
+                if (discount === '2') return p.discount >= 25 && p.discount < 50;
+                if (discount === '3') return p.discount >= 50;
+                return true;
+            });
         }
 
-        // Get all products matching the category and discount filter
-        let products = await modelProduct.find(query);
-
-        // Apply price filter on actual price (after discount)
         if (price && price !== '0') {
             products = products.filter((product) => {
-                const discountPercentage = product.discount || 0;
-                const actualPrice = product.price * (1 - discountPercentage / 100);
+                const actualPrice = product.price * (1 - (product.discount || 0) / 100);
 
                 switch (price) {
-                    case '1': // Dưới 500.000 VNĐ
-                        return actualPrice < 500000;
-                    case '2': // Từ 500.000 VNĐ - 1.000.000 VNĐ
-                        return actualPrice >= 500000 && actualPrice <= 1000000;
-                    case '3': // Từ 1.000.000 VNĐ - 2.000.000 VNĐ
-                        return actualPrice >= 1000000 && actualPrice <= 2000000;
-                    case '5': // Trên 5.000.000 VNĐ
-                        return actualPrice > 5000000;
+                    case '1':
+                        return actualPrice < 1_000_000;
+                    case '2':
+                        return actualPrice >= 1_000_000 && actualPrice <= 5_000_000;
+                    case '3':
+                        return actualPrice > 5_000_000 && actualPrice <= 20_000_000;
+                    case '4':
+                        return actualPrice > 20_000_000;
                     default:
                         return true;
                 }
@@ -117,17 +116,43 @@ class controllerProducts {
     }
 
     async getAllProduct(req, res) {
-        const products = await modelProduct.find();
-        const data = await Promise.all(
-            products.map(async (product) => {
-                const category = await modelCategory.findById(product.category);
-                return { ...product.toObject(), category: category.name, categoryId: category._id };
-            }),
-        );
+        const { price, discount } = req.query;
+
+        let products = await modelProduct.find();
+
+        if (discount && discount !== '0') {
+            products = products.filter((p) => {
+                if (discount === 'all') return p.discount > 0;
+                if (discount === '1') return p.discount >= 10 && p.discount < 25;
+                if (discount === '2') return p.discount >= 25 && p.discount < 50;
+                if (discount === '3') return p.discount >= 50;
+                return true;
+            });
+        }
+
+        if (price && price !== '0') {
+            products = products.filter((product) => {
+                const actualPrice = product.price * (1 - (product.discount || 0) / 100);
+
+                switch (price) {
+                    case '1':
+                        return actualPrice < 1_000_000;
+                    case '2':
+                        return actualPrice >= 1_000_000 && actualPrice <= 5_000_000;
+                    case '3':
+                        return actualPrice > 5_000_000 && actualPrice <= 20_000_000;
+                    case '4':
+                        return actualPrice > 20_000_000;
+                    default:
+                        return true;
+                }
+            });
+        }
+
         new OK({
             message: 'Lấy tất cả sản phẩm thành công',
             statusCode: 200,
-            metadata: data,
+            metadata: products,
         }).send(res);
     }
 

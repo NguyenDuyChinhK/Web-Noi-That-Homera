@@ -107,9 +107,18 @@ function ManagerOrder() {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('vi-VN');
-    };
+        if (!dateString) return '';
+        const date = new Date(dateString);
 
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const year = date.getUTCFullYear();
+
+        return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+    };
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
@@ -174,6 +183,13 @@ function ManagerOrder() {
             ),
         },
     ];
+    const getQuantityByProductId = (productId) => {
+        if (!selectedOrder || !selectedOrder.product) return 0;
+
+        const item = selectedOrder.product.find((p) => p.productId === productId);
+
+        return item ? item.quantity : 0;
+    };
 
     const orderItemColumns = [
         {
@@ -189,7 +205,6 @@ function ManagerOrder() {
                             ? images.split(',')[0]
                             : 'https://placehold.co/70x70/png?text=Không+có+ảnh'
                     }
-                    alt="Sản phẩm"
                     style={{ objectFit: 'cover' }}
                     preview={false}
                 />
@@ -199,6 +214,36 @@ function ManagerOrder() {
             title: 'Tên sản phẩm',
             dataIndex: 'name',
             key: 'name',
+        },
+        {
+            title: 'Số lượng',
+            key: 'quantity',
+            align: 'center',
+            render: (_, record) => {
+                const quantity = getQuantityByProductId(record._id);
+                return quantity;
+            },
+        },
+        {
+            title: 'Giá bán',
+            key: 'price',
+            align: 'right',
+            render: (_, record) => {
+                const finalPrice = record.discount > 0 ? record.price * (1 - record.discount / 100) : record.price;
+
+                return formatPrice(finalPrice);
+            },
+        },
+        {
+            title: 'Thành tiền',
+            key: 'total',
+            align: 'right',
+            render: (_, record) => {
+                const quantity = getQuantityByProductId(record._id);
+                const finalPrice = record.discount > 0 ? record.price * (1 - record.discount / 100) : record.price;
+
+                return formatPrice(finalPrice * quantity);
+            },
         },
     ];
 
@@ -219,7 +264,7 @@ function ManagerOrder() {
 
             <Modal
                 title="Chi tiết đơn hàng"
-                visible={isModalVisible}
+                open={isModalVisible}
                 onCancel={handleModalClose}
                 footer={null}
                 width={800}

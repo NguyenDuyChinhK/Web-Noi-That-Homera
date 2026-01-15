@@ -26,7 +26,7 @@ function OrderUser() {
                     res.metadata.map((order) => ({
                         _id: order.orderId,
                         createdAt: order.createdAt,
-                        product: order.products,
+                        product: order.products || [],
                         fullName: order.fullName,
                         phone: order.phone,
                         address: order.address,
@@ -121,24 +121,49 @@ function OrderUser() {
             key: 'product',
             render: (products) => (
                 <div className={cx('order-products')}>
-                    {products.map((item, index) => (
-                        <div key={index} className={cx('order-product-item')}>
-                            <img
-                                src={item?.images?.split(',')[0]}
-                                alt={item.name}
-                                className={cx('product-thumbnail')}
-                            />
-                            <div>
-                                <div className={cx('product-name')}>{item.name}</div>
-                                <div style={{ fontSize: '13px', color: '#666' }}>SL: {item.quantity}</div>
-                                <div style={{ fontWeight: 600, color: '#f56a00', marginTop: '4px' }}>
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-                                        item.price,
-                                    )}
+                    {products &&
+                        products.map((item, index) => {
+                            // Kiểm tra tất cả các khả năng của trường ảnh (images hoặc image)
+                            const rawImages = item?.images || item?.image;
+                            const imageList = typeof rawImages === 'string' ? rawImages.split(',') : rawImages;
+                            const displayImage =
+                                Array.isArray(imageList) && imageList.length > 0 ? imageList[0] : 'placehold.co';
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={cx('order-product-item')}
+                                    style={{ display: 'flex', marginBottom: '10px', gap: '10px' }}
+                                >
+                                    <img
+                                        src={displayImage}
+                                        alt={item.name}
+                                        className={cx('product-thumbnail')}
+                                        style={{
+                                            width: '60px',
+                                            height: '60px',
+                                            objectFit: 'cover',
+                                            borderRadius: '4px',
+                                        }}
+                                        onError={(e) => {
+                                            e.target.src = 'placehold.co';
+                                        }}
+                                    />
+                                    <div>
+                                        <div className={cx('product-name')} style={{ fontWeight: 500 }}>
+                                            {item.name}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#666' }}>SL: {item.quantity}</div>
+                                        <div style={{ fontWeight: 600, color: '#f56a00', marginTop: '4px' }}>
+                                            {new Intl.NumberFormat('vi-VN', {
+                                                style: 'currency',
+                                                currency: 'VND',
+                                            }).format(item.price)}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
+                            );
+                        })}
                 </div>
             ),
         },
@@ -250,30 +275,58 @@ function OrderUser() {
                 open={isReviewModalOpen}
                 onOk={handleReviewSubmit}
                 onCancel={() => setIsReviewModalOpen(false)}
-                okText="Gửi đánh giá"
+                okText={selectedProductIndex < currentOrder?.product.length - 1 ? 'Tiếp theo' : 'Gửi đánh giá'}
                 cancelText="Đóng"
             >
                 {currentOrder && (
                     <div className={cx('review-modal-content')}>
-                        <h3>Mã đơn hàng: #{currentOrder._id}</h3>
+                        <h3 style={{ marginBottom: '16px' }}>
+                            Mã đơn hàng: <span style={{ color: '#1890ff' }}>#{currentOrder._id}</span>
+                        </h3>
 
-                        <div className={cx('product-selection')}>
-                            <h4>Chọn sản phẩm để đánh giá:</h4>
+                        <div className={cx('product-selection')} style={{ marginBottom: '20px' }}>
+                            <h4 style={{ marginBottom: '12px' }}>Chọn sản phẩm để đánh giá:</h4>
                             <Radio.Group
                                 onChange={(e) => handleProductSelect(e.target.value)}
                                 value={selectedProductIndex}
+                                style={{ width: '100%' }}
                             >
                                 {currentOrder.product.map((item, index) => (
-                                    <Radio key={index} value={index} className={cx('product-radio')}>
-                                        <div className={cx('review-product-item')}>
+                                    <Radio
+                                        key={index}
+                                        value={index}
+                                        className={cx('product-radio')}
+                                        style={{ width: '100%', marginBottom: '8px' }}
+                                    >
+                                        <div
+                                            className={cx('review-product-item')}
+                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '12px' }}
+                                        >
                                             <img
-                                                src={item?.images?.split(',')[0]}
+                                                src={
+                                                    item?.images
+                                                        ? item.images.split(',')[0]
+                                                        : item?.image || 'placehold.co'
+                                                }
                                                 alt={item.name}
                                                 className={cx('product-thumbnail')}
+                                                style={{
+                                                    width: '50px',
+                                                    height: '50px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '4px',
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.src = 'placehold.co';
+                                                }}
                                             />
                                             <div className={cx('review-product-info')}>
-                                                <div className={cx('product-name')}>{item.name}</div>
-                                                <div>SL: {item.quantity}</div>
+                                                <div className={cx('product-name')} style={{ fontWeight: 500 }}>
+                                                    {item.name}
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                                                    Số lượng: {item.quantity}
+                                                </div>
                                             </div>
                                         </div>
                                     </Radio>
@@ -282,19 +335,24 @@ function OrderUser() {
                         </div>
 
                         {currentOrder.product.length > 0 && (
-                            <div className={cx('review-form')}>
-                                <h4>Đánh giá sản phẩm: {currentOrder.product[selectedProductIndex].name}</h4>
-                                <div className={cx('review-rating')}>
-                                    <div>Đánh giá của bạn:</div>
+                            <div
+                                className={cx('review-form')}
+                                style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}
+                            >
+                                <h4 style={{ color: '#f56a00' }}>
+                                    Đang đánh giá: {currentOrder.product[selectedProductIndex].name}
+                                </h4>
+                                <div className={cx('review-rating')} style={{ margin: '16px 0' }}>
+                                    <div style={{ marginBottom: '8px' }}>Đánh giá của bạn:</div>
                                     <Rate value={rating} onChange={setRating} />
                                 </div>
                                 <div className={cx('review-comment')}>
-                                    <div>Nhận xét:</div>
+                                    <div style={{ marginBottom: '8px' }}>Nhận xét:</div>
                                     <TextArea
                                         rows={4}
                                         value={reviewComment}
                                         onChange={(e) => setReviewComment(e.target.value)}
-                                        placeholder="Nhập nhận xét của bạn về sản phẩm..."
+                                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
                                     />
                                 </div>
                             </div>

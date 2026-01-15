@@ -76,7 +76,12 @@ function LoginUser() {
                             },
                         ]}
                     >
-                        <Input prefix={<UserOutlined />} placeholder="Email" size="large" />
+                        <Input
+                            prefix={<UserOutlined />}
+                            placeholder="Email"
+                            size="large"
+                            autoComplete="username" // Thêm cho ô email/tài khoản
+                        />
                     </Form.Item>
 
                     <Form.Item
@@ -88,7 +93,12 @@ function LoginUser() {
                             },
                         ]}
                     >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" size="large" />
+                        <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder="Mật khẩu"
+                            size="large"
+                            autoComplete="current-password" // Thêm cho ô mật khẩu hiện tại
+                        />
                     </Form.Item>
 
                     <Form.Item>

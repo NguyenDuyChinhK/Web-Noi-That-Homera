@@ -26,11 +26,17 @@ function CartUser() {
         await getCart();
     };
 
-    const onIncreaseQuantity = async (product, productId) => {
+    const onIncreaseQuantity = async (cartItem, product) => {
+        if (cartItem.quantity >= product.stock) {
+            alert(`Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho`);
+            return;
+        }
+
         const data = {
-            productId,
-            quantity: product.quantity + 1,
+            productId: product._id,
+            quantity: cartItem.quantity + 1,
         };
+
         await requestUpdateProductCart(data);
         await getCart();
     };
@@ -62,7 +68,7 @@ function CartUser() {
                             {dataCart?.cartItems?.map((item) => (
                                 <div key={item.product._id} className={cx('cart-item')}>
                                     <div className={cx('item-image')}>
-                                        <img src={item.product.images.split(',')[0]} alt="Ghế Sofa" />
+                                        <img src={item.product.images.split(',')[0]} />
                                     </div>
                                     <div className={cx('item-details')}>
                                         <h3 className={cx('item-name')}>{item.product.name}</h3>
@@ -85,13 +91,16 @@ function CartUser() {
                                             <button
                                                 onClick={() => onDecreaseQuantity(item.item, item.product._id)}
                                                 className={cx('quantity-btn', 'decrease')}
+                                                disabled={item.item.quantity === 1}
                                             >
                                                 -
                                             </button>
+
                                             <input type="text" value={item.item.quantity} readOnly />
                                             <button
-                                                onClick={() => onIncreaseQuantity(item.item, item.product._id)}
+                                                onClick={() => onIncreaseQuantity(item.item, item.product)}
                                                 className={cx('quantity-btn', 'increase')}
+                                                disabled={item.item.quantity >= item.product.stock}
                                             >
                                                 +
                                             </button>
@@ -105,11 +114,12 @@ function CartUser() {
                                             ×
                                         </button>
                                         <div className={cx('item-total')}>
-                                            {(item?.product?.discount
-                                                ? item?.product?.price -
-                                                  (item?.product?.discount * item?.product?.price) / 100
-                                                : item?.product?.price
-                                            )?.toLocaleString()}
+                                            {(
+                                                (item?.product?.discount
+                                                    ? item.product.price -
+                                                      (item.product.discount * item.product.price) / 100
+                                                    : item.product.price) * item.item.quantity
+                                            ).toLocaleString()}
                                             đ
                                         </div>
                                     </div>

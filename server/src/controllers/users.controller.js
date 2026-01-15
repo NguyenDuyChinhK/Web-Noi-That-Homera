@@ -276,12 +276,23 @@ class controllerUser {
             ]);
 
             // Get revenue statistics
+            const startOfSevenDaysAgo = new Date();
+            startOfSevenDaysAgo.setDate(startOfSevenDaysAgo.getDate() - 6);
+            startOfSevenDaysAgo.setHours(0, 0, 0, 0); // Ép về đúng 0 giờ sáng (ví dụ: 00:00:00 ngày 8/1/2026)
+
             const revenue = await modelPayment.aggregate([
-                { $match: { status: 'delivered' } }, // Count only completed orders
+                {
+                    // Đảm bảo chỉ tính các đơn hàng đã hoàn tất (delivered)
+                    $match: { status: 'delivered' },
+                },
                 {
                     $facet: {
-                        total: [{ $group: { _id: null, total: { $sum: '$totalPrice' } } }],
+                        total: [
+                            // Tổng doanh thu tất cả thời gian
+                            { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+                        ],
                         byMonth: [
+                            // Doanh thu theo tháng
                             {
                                 $group: {
                                     _id: { $month: '$createdAt' },
@@ -294,7 +305,7 @@ class controllerUser {
                         last7Days: [
                             {
                                 $match: {
-                                    createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+                                    createdAt: { $gte: startOfSevenDaysAgo },
                                 },
                             },
                             {
@@ -437,13 +448,18 @@ class controllerUser {
 
     async updateUserAdmin(req, res) {
         const { id, isAdminUser } = req.body;
-        if (isAdminUser) {
-            const user = await modelUser.findByIdAndUpdate(id, { isAdmin: true }, { new: true });
-            new OK({ message: 'Cập nhật quyền thành công', metadata: user }).send(res);
-        } else {
-            const user = await modelUser.findByIdAndUpdate(id, { isAdmin: false }, { new: true });
-            new OK({ message: 'Cập nhật quyền thành công', metadata: user }).send(res);
+        const currentUserId = req.user.id;
+
+        if (id === currentUserId) {
+            throw new BadRequestError('Không thể thay đổi quyền của chính bạn');
         }
+
+        const user = await modelUser.findByIdAndUpdate(id, { isAdmin: !!isAdminUser }, { new: true });
+
+        new OK({
+            message: 'Cập nhật quyền thành công',
+            metadata: user,
+        }).send(res);
     }
 
     async forgotPassword(req, res) {

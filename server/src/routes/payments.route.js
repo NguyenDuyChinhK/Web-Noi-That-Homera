@@ -4,6 +4,7 @@ const router = express.Router();
 const controllerPayments = require('../controllers/payments.controller');
 
 const { asyncHandler, authUser, authAdmin } = require('../auth/checkAuth');
+
 router.post('/api/create-payment', authUser, asyncHandler(controllerPayments.createPayment));
 router.get('/api/check-payment-vnpay', asyncHandler(controllerPayments.checkPaymentVnpay));
 router.get('/api/check-payment-momo', asyncHandler(controllerPayments.checkPaymentMomo));

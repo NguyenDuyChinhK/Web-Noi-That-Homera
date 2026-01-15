@@ -20,7 +20,7 @@ import { requestAdmin, requestStatistical } from '../../../../config/request';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+
 const cx = classNames.bind(styles);
 
 function ManagerStatistical() {
@@ -60,7 +60,7 @@ function ManagerStatistical() {
     if (loading) {
         return (
             <div className={cx('loading-container')}>
-                <Spin size="large" tip="Đang tải dữ liệu thống kê..." />
+                <Spin size="large" tip="Đang tải dữ liệu thống kê..." fullscreen />
             </div>
         );
     }
@@ -134,34 +134,39 @@ function ManagerStatistical() {
         },
     ];
 
-    // Format payment method data for pie chart
-    const paymentMethodData = statistical.orders.byPaymentMethod.map((item) => ({
-        type: formatPaymentMethod(item._id),
-        value: item.count,
-    }));
-
-    // Ensure we always have 7 days of data
+    // Đảm bảo luôn có dữ liệu của 7 ngày theo chuẩn UTC để khớp với Database
     const ensureSevenDaysData = () => {
-        const today = new Date();
+        const now = new Date();
 
         const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date(today);
-            date.setDate(date.getDate() - (6 - i));
-            return `${date.getDate()}/${date.getMonth() + 1}`;
+            const date = new Date(now);
+            date.setUTCDate(now.getUTCDate() - (6 - i));
+
+            const day = date.getUTCDate();
+            const month = date.getUTCMonth() + 1;
+
+            return `${day}/${month}`;
         });
 
         const map = {};
 
+        // Đưa dữ liệu từ Backend vào Object map để tra cứu
         (statistical.revenue.last7Days || []).forEach((item) => {
             map[item.day] = {
                 day: item.day,
-
                 revenue: Number(item.revenue) || 0,
                 count: Number(item.count) || 0,
             };
         });
 
-        return last7Days.map((day) => map[day] || { day, revenue: 0, count: 0 });
+        // Tạo mảng dữ liệu cuối cùng cho biểu đồ
+        return last7Days.map((dayLabel) => {
+            if (map[dayLabel]) {
+                return map[dayLabel];
+            }
+
+            return { day: dayLabel, revenue: 0, count: 0 };
+        });
     };
 
     const completeRevenueData = ensureSevenDaysData();
@@ -175,7 +180,7 @@ function ManagerStatistical() {
             {/* Summary Stats Cards */}
             <Row gutter={[16, 16]} className={cx('summary-row')}>
                 <Col xs={24} sm={12} md={12} lg={6}>
-                    <Card bordered={false} className={cx('stat-card')}>
+                    <Card variant="borderless" className={cx('stat-card')}>
                         <Statistic
                             title="Tổng số người dùng"
                             value={statistical.users.total}
@@ -192,7 +197,7 @@ function ManagerStatistical() {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={12} lg={6}>
-                    <Card bordered={false} className={cx('stat-card')}>
+                    <Card variant="borderless" className={cx('stat-card')}>
                         <Statistic
                             title="Tổng số sản phẩm"
                             value={statistical.products.total}
@@ -205,7 +210,7 @@ function ManagerStatistical() {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={12} lg={6}>
-                    <Card bordered={false} className={cx('stat-card')}>
+                    <Card variant="borderless" className={cx('stat-card')}>
                         <Statistic
                             title="Tổng đơn hàng"
                             value={statistical.orders.total}
@@ -220,7 +225,7 @@ function ManagerStatistical() {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={12} lg={6}>
-                    <Card bordered={false} className={cx('stat-card')}>
+                    <Card variant="borderless" className={cx('stat-card')}>
                         <Statistic
                             title="Tổng doanh thu"
                             value={statistical.revenue.total}
@@ -237,68 +242,71 @@ function ManagerStatistical() {
                 </Col>
             </Row>
 
-            <Tabs defaultActiveKey="1" className={cx('tabs-container')}>
-                <TabPane
-                    tab={
-                        <span>
-                            <RiseOutlined /> Doanh thu
-                        </span>
-                    }
-                    key="1"
-                >
-                    <Card
-                        title={
-                            <div>
-                                <CalendarOutlined /> Doanh thu 7 ngày gần đây
-                            </div>
-                        }
-                        bordered={false}
-                    >
-                        <Column
-                            data={completeRevenueData}
-                            xField="day"
-                            yField="revenue"
-                            minColumnWidth={30}
-                            maxColumnWidth={60}
-                            label={{
-                                position: 'top',
-                                style: {
-                                    fill: '#595959',
-                                    fontSize: 12,
-                                },
-                                formatter: (v) => {
-                                    return v.revenue > 0 ? `${(v.revenue / 1000000).toFixed(1)}tr` : '';
-                                },
-                            }}
-                            tooltip={{
-                                formatter: (data) => {
-                                    const revenue = Number(data.revenue) || 0;
-                                    const count = Number(data.count) || 0;
+            <Tabs
+                defaultActiveKey="1"
+                className={cx('tabs-container')}
+                items={[
+                    {
+                        key: '1',
+                        label: (
+                            <span>
+                                <RiseOutlined /> Doanh thu
+                            </span>
+                        ),
+                        children: (
+                            <Card
+                                title={
+                                    <div>
+                                        <CalendarOutlined /> Doanh thu 7 ngày gần đây
+                                    </div>
+                                }
+                                variant="borderless"
+                            >
+                                <Column
+                                    data={completeRevenueData}
+                                    xField="day"
+                                    yField="revenue"
+                                    minColumnWidth={30}
+                                    maxColumnWidth={60}
+                                    label={{
+                                        text: (d) => (d.revenue > 0 ? `${(d.revenue / 1_000_000).toFixed(1)}tr` : ''),
+                                        position: 'top',
+                                        style: {
+                                            fill: '#595959',
+                                            fontSize: 12,
+                                        },
+                                    }}
+                                    tooltip={{
+                                        title: (d) => `Ngày: ${d.day}`,
 
-                                    return {
-                                        name: 'Doanh thu',
-                                        value:
-                                            revenue > 0
-                                                ? `${revenue.toLocaleString('vi-VN')}đ (${count} đơn)`
-                                                : 'Không có doanh thu',
-                                    };
-                                },
-                            }}
-                        />
-                    </Card>
-                </TabPane>
-
-                <TabPane
-                    tab={
-                        <span>
-                            <ShoppingOutlined /> Sản phẩm
-                        </span>
-                    }
-                    key="2"
-                >
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} lg={24}>
-                            <Card title="Sản phẩm bán chạy" bordered={false}>
+                                        items: [
+                                            (d) => {
+                                                return {
+                                                    name: 'Doanh thu',
+                                                    value:
+                                                        d.revenue > 0
+                                                            ? `${d.revenue.toLocaleString('vi-VN')}đ (${
+                                                                  d.count || 0
+                                                              } đơn)`
+                                                            : 'Không có doanh thu',
+                                                    color: '#1890ff', // Màu sắc icon nhỏ bên cạnh
+                                                };
+                                            },
+                                        ],
+                                    }}
+                                />
+                            </Card>
+                        ),
+                    },
+                    {
+                        key: '2',
+                        label: (
+                            <span>
+                                <ShoppingOutlined /> Sản phẩm
+                            </span>
+                        ),
+                        children: (
+                            <Card title="Sản phẩm bán chạy" variant="borderless">
                                 <Table
                                     dataSource={statistical.products.topSelling}
                                     columns={topProductColumns}
@@ -306,68 +314,71 @@ function ManagerStatistical() {
                                     pagination={false}
                                 />
                             </Card>
-                        </Col>
-                    </Row>
-                </TabPane>
+                        ),
+                    },
+                    {
+                        key: '4',
+                        label: (
+                            <span>
+                                <StarOutlined /> Đánh giá
+                            </span>
+                        ),
+                        children: (
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} md={8}>
+                                    <Card variant="borderless">
+                                        <Statistic
+                                            title="Tổng số đánh giá"
+                                            value={statistical.reviews.total}
+                                            prefix={<StarOutlined />}
+                                            valueStyle={{ color: '#faad14' }}
+                                        />
+                                    </Card>
+                                </Col>
 
-                <TabPane
-                    tab={
-                        <span>
-                            <StarOutlined /> Đánh giá
-                        </span>
-                    }
-                    key="4"
-                >
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false}>
-                                <Statistic
-                                    title="Tổng số đánh giá"
-                                    value={statistical.reviews.total}
-                                    prefix={<StarOutlined />}
-                                    valueStyle={{ color: '#faad14' }}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false}>
-                                <Statistic
-                                    title="Đánh giá trung bình"
-                                    value={statistical.reviews.averageRating.toFixed(1)}
-                                    suffix="/5"
-                                    prefix={<StarOutlined />}
-                                    valueStyle={{ color: '#faad14' }}
-                                />
-                                <Progress
-                                    percent={(statistical.reviews.averageRating / 5) * 100}
-                                    strokeColor="#faad14"
-                                    showInfo={false}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} md={8}>
-                            <Card bordered={false} className={cx('rating-distribution')}>
-                                <Statistic
-                                    title="Số sản phẩm có đánh giá"
-                                    value={statistical.reviews.ratedProductCount}
-                                    prefix={<StarOutlined />}
-                                    valueStyle={{ color: '#faad14' }}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24}>
-                            <Card title="Sản phẩm được đánh giá cao nhất" bordered={false}>
-                                <Table
-                                    dataSource={statistical.reviews.bestRatedProducts}
-                                    columns={bestRatedColumns}
-                                    rowKey="_id"
-                                    pagination={false}
-                                />
-                            </Card>
-                        </Col>
-                    </Row>
-                </TabPane>
-            </Tabs>
+                                <Col xs={24} md={8}>
+                                    <Card variant="borderless">
+                                        <Statistic
+                                            title="Đánh giá trung bình"
+                                            value={statistical.reviews.averageRating.toFixed(1)}
+                                            suffix="/5"
+                                            prefix={<StarOutlined />}
+                                            valueStyle={{ color: '#faad14' }}
+                                        />
+                                        <Progress
+                                            percent={(statistical.reviews.averageRating / 5) * 100}
+                                            strokeColor="#faad14"
+                                            showInfo={false}
+                                        />
+                                    </Card>
+                                </Col>
+
+                                <Col xs={24} md={8}>
+                                    <Card variant="borderless">
+                                        <Statistic
+                                            title="Số sản phẩm có đánh giá"
+                                            value={statistical.reviews.ratedProductCount}
+                                            prefix={<StarOutlined />}
+                                            valueStyle={{ color: '#faad14' }}
+                                        />
+                                    </Card>
+                                </Col>
+
+                                <Col xs={24}>
+                                    <Card title="Sản phẩm được đánh giá cao nhất" variant="borderless">
+                                        <Table
+                                            dataSource={statistical.reviews.bestRatedProducts}
+                                            columns={bestRatedColumns}
+                                            rowKey="_id"
+                                            pagination={false}
+                                        />
+                                    </Card>
+                                </Col>
+                            </Row>
+                        ),
+                    },
+                ]}
+            />
         </div>
     );
 }
