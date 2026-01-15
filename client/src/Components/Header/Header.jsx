@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './Header.module.scss';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 
 import logo from '../../assets/images/Logos/logo.webp';
 import { Link, useNavigate } from 'react-router-dom';
@@ -90,46 +90,57 @@ function Header() {
                 </div>
 
                 <div className={cx('search-box')}>
-                    <select
-                        name=""
-                        id=""
-                        onChange={(e) => {
-                            setIdCategory(e.target.value);
-                            setNameCategory(e.target.options[e.target.selectedIndex].text);
-                        }}
-                    >
-                        <option value="all">Tất cả sản phẩm</option>
-                        {category.map((item) => (
-                            <option key={item._id} value={item._id}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </select>
-                    <input type="text" placeholder="Tìm kiếm" onChange={(e) => setValueSearch(e.target.value)} />
-                    {valueSearch && (
-                        <div className={cx('search-result-wrapper')}>
-                            {dataSearch.length > 0 ? (
-                                <div className={cx('search-result')}>
-                                    {dataSearch.map((item) => (
-                                        <Link id={cx('search-result-item')} to={`/product/${item._id}`} key={item.id}>
-                                            <div className={cx('search-result-item')}>
-                                                <img src={`${item.images.split(',')[0]}`} alt="" />
-                                                <div className={cx('search-result-item-info')}>
-                                                    <h3>{item.name}</h3>
-                                                    <p>{item.price.toLocaleString('vi-VN')}đ</p>
+                    {/* Khối bên trái: Ô nhập tìm kiếm */}
+                    <div className={cx('search-input-wrapper')}>
+                        <input type="text" placeholder="Tìm kiếm..." onChange={(e) => setValueSearch(e.target.value)} />
+
+                        {/* Kết quả tìm kiếm hiển thị ngay dưới ô input */}
+                        {valueSearch && (
+                            <div className={cx('search-result-wrapper')}>
+                                {dataSearch.length > 0 ? (
+                                    <div className={cx('search-result')}>
+                                        {dataSearch.map((item) => (
+                                            <Link
+                                                id={cx('search-result-item')}
+                                                to={`/product/${item._id}`}
+                                                key={item.id}
+                                            >
+                                                <div className={cx('search-result-item')}>
+                                                    <img src={`${item.images.split(',')[0]}`} alt="" />
+                                                    <div className={cx('search-result-item-info')}>
+                                                        <h3>{item.name}</h3>
+                                                        <p>{item.price.toLocaleString('vi-VN')}đ</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className={cx('search-result-empty')}>Không tìm thấy kết quả</div>
-                            )}
-                        </div>
-                    )}
-                    <button onClick={onNavigate}>
-                        <FontAwesomeIcon icon={faSearch} />
-                    </button>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className={cx('search-result-empty')}>Không tìm thấy kết quả</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Khối bên phải: Cụm lọc (Select + Icon) */}
+                    <div className={cx('filter-group')}>
+                        <select
+                            onChange={(e) => {
+                                setIdCategory(e.target.value);
+                                setNameCategory(e.target.options[e.target.selectedIndex].text);
+                            }}
+                        >
+                            <option value="all">Tất cả sản phẩm</option>
+                            {category.map((item) => (
+                                <option key={item._id} value={item._id}>
+                                    {item.name}
+                                </option>
+                            ))}
+                        </select>
+                        <button className={cx('filter-btn')} onClick={onNavigate}>
+                            <FontAwesomeIcon icon={faFilter} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className={cx('auth-box')}>
