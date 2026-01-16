@@ -2,6 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './CartUser.module.scss';
 import Header from '../../Components/Header/Header';
 import Footer from '../../Components/Footer/Footer';
+import { Popconfirm, message } from 'antd';
 
 import { Link } from 'react-router-dom';
 import { useStore } from '../../hooks/userStore';
@@ -19,11 +20,17 @@ function CartUser() {
     }, []);
 
     const handleDeleteProductCart = async (productId) => {
-        const data = {
-            productId,
-        };
-        await requestDeleteProductCart(data);
-        await getCart();
+        try {
+            const data = {
+                productId,
+            };
+            await requestDeleteProductCart(data);
+            message.success('Xóa sản phẩm khỏi giỏ hàng thành công');
+            await getCart();
+        } catch (error) {
+            console.error(error);
+            message.error('Xóa sản phẩm thất bại');
+        }
     };
 
     const onIncreaseQuantity = async (cartItem, product) => {
@@ -107,12 +114,14 @@ function CartUser() {
                                         </div>
                                     </div>
                                     <div className={cx('item-actions')}>
-                                        <button
-                                            onClick={() => handleDeleteProductCart(item.product._id)}
-                                            className={cx('remove-btn')}
+                                        <Popconfirm
+                                            title="Bạn chắc chắn muốn xóa sản phẩm này?"
+                                            okText="Xóa"
+                                            cancelText="Hủy"
+                                            onConfirm={() => handleDeleteProductCart(item.product._id)}
                                         >
-                                            ×
-                                        </button>
+                                            <button className={cx('remove-btn')}>×</button>
+                                        </Popconfirm>
                                         <div className={cx('item-total')}>
                                             {(
                                                 (item?.product?.discount

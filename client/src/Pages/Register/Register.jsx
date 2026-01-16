@@ -80,7 +80,7 @@ function Register() {
                         name="phone"
                         rules={[
                             { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                            { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ!' },
+                            { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ! ' },
                         ]}
                     >
                         <Input prefix={<PhoneOutlined />} placeholder="Số điện thoại" size="large" />

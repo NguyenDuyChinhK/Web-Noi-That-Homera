@@ -129,8 +129,18 @@ function InfoUser() {
                                 <div className={cx('info-item')}>
                                     <span className={cx('label')}>Số điện thoại:</span>
                                     {isEditing ? (
-                                        <Form.Item name="phone" className={cx('value')}>
-                                            <Input />
+                                        <Form.Item
+                                            name="phone"
+                                            className={cx('value')}
+                                            rules={[
+                                                { required: true, message: 'Vui lòng nhập số điện thoại!' },
+                                                {
+                                                    pattern: /^[0-9]{10}$/,
+                                                    message: 'Số điện thoại không hợp lệ !',
+                                                },
+                                            ]}
+                                        >
+                                            <Input placeholder="Nhập số điện thoại" />
                                         </Form.Item>
                                     ) : (
                                         <span className={cx('value')}>{dataUser.phone}</span>

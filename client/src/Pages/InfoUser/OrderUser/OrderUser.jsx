@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Button, Modal, Rate, Input, message, Radio } from 'antd';
+import { Table, Tag, Button, Modal, Rate, Input, message, Radio, Popconfirm } from 'antd';
 import style from './OrderUser.module.scss';
 import classNames from 'classnames/bind';
 import { requestCancelOrder, requestGetOrderUser, requestCreatePreviewProduct } from '../../../config/request';
@@ -249,14 +249,16 @@ function OrderUser() {
                     );
                 } else if (record.status === 'pending') {
                     return (
-                        <Button
-                            type="primary"
-                            danger
-                            onClick={() => handleCancelOrder(record._id)}
-                            icon={<CloseCircleOutlined />}
+                        <Popconfirm
+                            title="Bạn chắc chắn muốn huỷ đơn hàng này?"
+                            okText="Huỷ đơn"
+                            cancelText="Đóng"
+                            onConfirm={() => handleCancelOrder(record._id)}
                         >
-                            Huỷ đơn hàng
-                        </Button>
+                            <Button type="primary" danger icon={<CloseCircleOutlined />}>
+                                Huỷ đơn hàng
+                            </Button>
+                        </Popconfirm>
                     );
                 }
                 return null;

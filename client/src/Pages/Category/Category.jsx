@@ -11,7 +11,6 @@ import { FilterOutlined } from '@ant-design/icons';
 import useFetch from '../../hooks/useFetch';
 import CardBody from '../../Components/CardBody/CardBody';
 import Loading from '../../Components/Loading/Loading';
-import slide_1 from '../../assets/images/slideShow/slideshow_1.jpg';
 const cx = classNames.bind(styles);
 
 function Category() {
@@ -58,10 +57,6 @@ function Category() {
                 <Header />
             </header>
             <main className={cx('container')}>
-                <div className={cx('banner')}>
-                    <img src={slide_1} alt="" />
-                </div>
-
                 <div className={cx('inner')}>
                     <h2>{title}</h2>
 
