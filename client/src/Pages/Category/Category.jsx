@@ -100,9 +100,13 @@ function Category() {
                         <Loading />
                     ) : (
                         <div className={cx('list-product')}>
-                            {data.map((product) => (
-                                <CardBody key={product?._id} item={product} />
-                            ))}
+                            {data && data.length > 0 ? (
+                                data.map((product) => <CardBody key={product?._id} item={product} />)
+                            ) : (
+                                <div className={cx('no-result')}>
+                                    <p>Không tìm thấy kết quả phù hợp với bộ lọc đã chọn.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
