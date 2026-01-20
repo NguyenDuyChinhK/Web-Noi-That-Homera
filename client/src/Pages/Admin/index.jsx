@@ -49,7 +49,6 @@ function AdminLayout() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Define menu items for the sidebar
     const menuItems = [
         {
             key: 'dashboard',
@@ -78,7 +77,6 @@ function AdminLayout() {
         },
     ];
 
-    // Get current selected key from URL path
     const getSelectedKey = () => {
         const path = location.pathname;
         const key = path.split('/').pop();

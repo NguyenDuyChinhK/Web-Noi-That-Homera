@@ -8,7 +8,7 @@ const { asyncHandler, authUser, authAdmin } = require('../auth/checkAuth');
 router.post('/api/create-payment', authUser, asyncHandler(controllerPayments.createPayment));
 router.get('/api/check-payment-vnpay', asyncHandler(controllerPayments.checkPaymentVnpay));
 router.get('/api/check-payment-momo', asyncHandler(controllerPayments.checkPaymentMomo));
-router.get('/api/get-payment-success', authUser, asyncHandler(controllerPayments.getPaymentSuccess));
+router.get('/api/get-payment-success', asyncHandler(controllerPayments.getPaymentSuccess));
 router.get('/api/get-order-user', authUser, asyncHandler(controllerPayments.getOrderUser));
 router.post('/api/cancel-order', authUser, asyncHandler(controllerPayments.cancelOrder));
 router.get('/api/get-order-admin', authAdmin, asyncHandler(controllerPayments.getOrderAdmin));

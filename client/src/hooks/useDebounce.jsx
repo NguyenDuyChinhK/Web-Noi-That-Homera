@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // import thu vien
+import { useState, useEffect } from 'react';
 
 function useDebounce(value, delay) {
     // tao hook useDebounce
@@ -12,4 +12,4 @@ function useDebounce(value, delay) {
     return debounceValue; // trả về value để gọi api
 }
 
-export default useDebounce; // export hook
+export default useDebounce;

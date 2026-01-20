@@ -26,8 +26,6 @@ export const requestUploadImage = async (formData) => {
     return res.data;
 };
 
-//// category
-
 export const requestForgotPassword = async (data) => {
     const res = await request.post('/api/forgot-password', data);
     return res.data;

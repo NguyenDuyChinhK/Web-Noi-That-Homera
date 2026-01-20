@@ -21,7 +21,7 @@ function ManagerProduct() {
     const [editingId, setEditingId] = useState(null);
     const [fileList, setFileList] = useState([]);
     const [categories, setCategories] = useState([]);
-
+    z;
     useEffect(() => {
         const fetchCategories = async () => {
             const response = await requestGetAllCategory();
@@ -194,20 +194,15 @@ function ManagerProduct() {
             >
                 <Form layout="vertical" form={form} onFinish={handleSubmit}>
                     <Form.Item label="Tên sản phẩm" name="name" rules={[{ required: true }]}>
-                        <Input placeholder="Nhập tên sản phẩm" />
+                        <Input />
                     </Form.Item>
 
                     <Form.Item label="Giá" name="price" rules={[{ required: true }]}>
-                        <InputNumber style={{ width: '100%' }} placeholder="Nhập giá sản phẩm (VND)" min={0} />
+                        <InputNumber style={{ width: '100%' }} />
                     </Form.Item>
 
                     <Form.Item label="Giảm giá (%)" name="discount" rules={[{ required: true }]}>
-                        <InputNumber
-                            min={0}
-                            max={100}
-                            style={{ width: '100%' }}
-                            placeholder="Nhập % giảm giá (0 - 100)"
-                        />
+                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
                     </Form.Item>
 
                     <Form.Item label="Danh mục" name="category" rules={[{ required: true }]}>
@@ -221,11 +216,11 @@ function ManagerProduct() {
                     </Form.Item>
 
                     <Form.Item label="Kích thước" name="size" rules={[{ required: true }]}>
-                        <Input placeholder="Nhập kích thước (VD: 120x80x75 cm)" />
+                        <Input />
                     </Form.Item>
 
                     <Form.Item label="Tồn kho" name="stock" rules={[{ required: true }]}>
-                        <InputNumber style={{ width: '100%' }} min={0} placeholder="Nhập số lượng tồn kho" />
+                        <InputNumber style={{ width: '100%' }} />
                     </Form.Item>
 
                     <Form.Item label="Mô tả" name="description" rules={[{ required: true }]}>

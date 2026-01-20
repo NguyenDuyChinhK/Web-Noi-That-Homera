@@ -50,7 +50,7 @@ function InfoUser() {
                 await requestUpdateUser(data);
                 await getAuthUser();
                 console.log('Edited values:', values);
-                // Here you would typically call an API to update the user information
+
                 message.success('Cập nhật thông tin thành công!');
                 setIsEditing(false);
             })

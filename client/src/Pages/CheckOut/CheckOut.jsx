@@ -37,7 +37,7 @@ function CheckOut() {
     }, []);
 
     const { dataCart, getCart } = useStore();
-    // Mock order data (would normally come from cart or context)
+
     const orderItems = dataCart?.cartItems?.map((item) => {
         const unitPrice = item?.product.discount
             ? item.product.price - (item.product.discount * item.product.price) / 100
@@ -61,19 +61,21 @@ function CheckOut() {
             return;
         }
 
-        // In a real application, this would make an API call to fetch address suggestions
+        // APi gợi ý địa chỉ
         setTimeout(async () => {
             const response = await axios.get('https://rsapi.goong.io/Place/AutoComplete', {
                 params: {
                     input: value,
-                    api_key: 'oAyJuGlP3ylS5UGBA3HgpppFgwaBhPUUrP7Xv5Ak',
+                    location: '21.0285,105.8542',
+                    api_key: '6QMiy3onDv4SFbI6ZuglfTdcjlr4eaLcaGw5sRwy',
+                    radius: 10000,
                 },
             });
 
             const data = response.data.predictions;
 
             setAddressOptions(data);
-        }, 300); // Simulate network delay
+        }, 300);
     };
 
     const navigate = useNavigate();
@@ -108,7 +110,6 @@ function CheckOut() {
         }
     };
 
-    // Payment method icons
     const paymentIcons = {
         COD: <DollarOutlined style={{ fontSize: '24px', color: '#108ee9' }} />,
         VNPAY: <img src={icon_vnpay} alt="VNPAY" height="24" />,
@@ -135,7 +136,6 @@ function CheckOut() {
                     scrollToFirstError
                 >
                     <Row gutter={[32, 24]}>
-                        {/* Left Column - Customer Information */}
                         <Col xs={24} lg={12}>
                             <Card title="Thông tin giao hàng" variant="borderless">
                                 <Form.Item

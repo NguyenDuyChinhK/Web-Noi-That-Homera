@@ -12,9 +12,7 @@ import {
 
 const cx = classNames.bind(styles);
 
-// Function for deleting category - would require backend route implementation
 const deleteCategory = async (id) => {
-    // This route would need to be implemented on the backend
     try {
         const res = await requestDeleteCategory(id);
         return res.data;
@@ -32,7 +30,6 @@ function ManagerCategory() {
     const [form] = Form.useForm();
     const [editingCategory, setEditingCategory] = useState(null);
 
-    // Fetch all categories
     const fetchCategories = async () => {
         try {
             setLoading(true);
@@ -50,7 +47,6 @@ function ManagerCategory() {
         fetchCategories();
     }, []);
 
-    // Handle modal
     const showModal = (category = null) => {
         setEditingCategory(category);
         if (category) {
@@ -67,11 +63,9 @@ function ManagerCategory() {
         setEditingCategory(null);
     };
 
-    // Handle form submission
     const handleSubmit = async (values) => {
         try {
             if (editingCategory) {
-                // Update existing category
                 const data = {
                     id: editingCategory._id,
                     name: values.name,
@@ -79,7 +73,6 @@ function ManagerCategory() {
                 await requestUpdateCategory(data);
                 message.success('Cập nhật danh mục thành công');
             } else {
-                // Create new category
                 await requestCreateCategory(values);
                 message.success('Tạo danh mục thành công');
             }
@@ -93,7 +86,6 @@ function ManagerCategory() {
         }
     };
 
-    // Handle category deletion
     const handleDelete = async (id) => {
         try {
             await deleteCategory(id);
@@ -104,7 +96,6 @@ function ManagerCategory() {
         }
     };
 
-    // Table columns
     const columns = [
         {
             title: 'STT',

@@ -44,7 +44,6 @@ function Category() {
         setDiscountFilter(value);
     };
 
-    // Re-fetch when filters change
     useEffect(() => {
         if (data) {
             reFetch();

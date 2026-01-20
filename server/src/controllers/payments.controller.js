@@ -31,11 +31,9 @@ class controllerPayments {
 
         // Kiểm tra tồn kho cho tất cả sản phẩm trong giỏ hàng
         const stockErrors = [];
-
         for (const item of findCart.product) {
             const product = await modelProduct.findById(item.productId);
             if (!product) continue;
-
             if (product.stock < item.quantity) {
                 stockErrors.push(`${product.name}: còn ${product.stock}, bạn chọn ${item.quantity}`);
             }
@@ -45,6 +43,7 @@ class controllerPayments {
         if (stockErrors.length > 0) {
             throw new BadRequestError(stockErrors.join(' | '));
         }
+
         if (typePayment === 'COD') {
             const payment = await modelPayments.create({
                 userId: id,
@@ -67,9 +66,9 @@ class controllerPayments {
         if (typePayment === 'VNPAY') {
             const vnpay = await new VNPay({
                 // Thông tin cấu hình bắt buộc
-                tmnCode: 'GS1I559X',
-                secureSecret: 'WWS2Y89FTXLSQKVH54CERAMWNAJMNUB5',
-                vnpayHost: 'https://sandbox.vnpayment.vn/merchantv2',
+                tmnCode: '90XABAHA',
+                secureSecret: 'MWQVIIPCV0B2QMMW1X81NA4DLK1WE8CD',
+                vnpayHost: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
                 // Cấu hình tùy chọn
                 testMode: true, // Chế độ test
                 hashAlgorithm: 'SHA512', // Thuật toán mã hóa
@@ -188,7 +187,7 @@ class controllerPayments {
                     phone: findCart.phone,
                     address: findCart.address,
                     product: findCart.product,
-                    total: findCart?.totalPrice,
+                    totalPrice: Number(findCart.totalPrice),
                     paymentMethod: 'VNPAY',
                     userId: findCart.userId,
                     status: 'pending',
@@ -196,7 +195,7 @@ class controllerPayments {
                 });
                 await newPayment.save();
                 await findCart.deleteOne();
-                return res.redirect(`${process.env.DOMAIN_URL}/payments/${newPayment._id}`);
+                return res.redirect(`${process.env.CLIENT_URL}/payments/${newPayment._id}`);
             }
         } catch (error) {
             console.log(error);
@@ -220,7 +219,7 @@ class controllerPayments {
                 phone: findCart.phone,
                 address: findCart.address,
                 product: findCart.product,
-                total: findCart?.totalPrice,
+                totalPrice: Number(findCart.totalPrice),
                 paymentMethod: 'MOMO',
                 userId: findCart.userId,
                 note: findCart.note,
@@ -229,14 +228,14 @@ class controllerPayments {
 
             await newPayment.save();
             await findCart.deleteOne();
-            return res.redirect(`${process.env.DOMAIN_URL}/payments/${newPayment._id}`);
+            return res.redirect(`${process.env.CLIENT_URL}/payments/${newPayment._id}`);
         }
     }
 
     async getPaymentSuccess(req, res) {
         const { idPayment } = req.query;
-        const { id } = req.user;
-        const findPayment = await modelPayments.findOne({ _id: idPayment, userId: id });
+        const findPayment = await modelPayments.findOne({ _id: idPayment });
+
         if (!findPayment) {
             throw new BadRequestError('Không tìm thấy đơn hàng');
         }
@@ -328,6 +327,7 @@ class controllerPayments {
     async cancelOrder(req, res) {
         const { id } = req.user;
         const { idOrder } = req.body;
+
         const findOrder = await modelPayments.findOne({ _id: idOrder, userId: id });
         if (!findOrder) {
             throw new BadRequestError('Không tìm thấy đơn hàng');
@@ -335,6 +335,7 @@ class controllerPayments {
 
         findOrder.status = 'cancelled';
         await findOrder.save();
+
         new OK({ message: 'Đơn hàng đã được hủy bỏ' }).send(res);
     }
 

@@ -21,7 +21,7 @@ function ForgotPassword() {
     const handleSendOTP = async (values) => {
         try {
             setLoading(true);
-            // TODO: Call API to send OTP
+
             console.log(values);
 
             await requestForgotPassword({ email: values.email });
@@ -47,10 +47,10 @@ function ForgotPassword() {
 
             await requestResetPassword(data);
             navigate('/login');
-            // Simulate API call
+
             setTimeout(() => {
                 message.success('Đặt lại mật khẩu thành công');
-                // TODO: Redirect to login page
+
                 setLoading(false);
             }, 1000);
         } catch (error) {

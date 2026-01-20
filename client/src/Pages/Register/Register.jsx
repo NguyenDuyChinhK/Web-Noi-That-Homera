@@ -12,7 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Row, Col, message } from 'antd';
 import { useEffect } from 'react';
 
-import { requestRegister } from '../../config/request';
+import { requestRegister, requestLoginGoogle } from '../../config/request';
 
 const cx = classNames.bind(styles);
 
@@ -36,20 +36,18 @@ function Register() {
     };
 
     const handleSuccess = async (response) => {
-        const { credential } = response; // Nhận ID Token từ Google
+        const { credential } = response;
+
         try {
-            // const res = await requestLoginGoogle(credential);
-            // message.success(res.message);
-            // setTimeout(() => {
-            //     window.location.reload();
-            // }, 1000);
-            navigate('/');
+            const res = await requestLoginGoogle(credential);
+
+            message.success(res.message || 'Đăng nhập Google thành công!');
+            setTimeout(() => {
+                navigate('/');
+            }, 1000);
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.message) {
-                message.error(error.response.data.message);
-            } else {
-                message.error('Đăng nhập bằng Google thất bại. Vui lòng thử lại!');
-            }
+            console.error(error);
+            message.error(error?.response?.data?.message || 'Đăng nhập bằng Google thất bại. Vui lòng thử lại!');
         }
     };
 

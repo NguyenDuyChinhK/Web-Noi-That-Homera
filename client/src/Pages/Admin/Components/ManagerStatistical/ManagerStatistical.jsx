@@ -69,13 +69,11 @@ function ManagerStatistical() {
         return <Empty description="Không có dữ liệu thống kê" />;
     }
 
-    // Format revenue data for Line chart
     const revenueData = statistical.revenue.byMonth.map((item) => ({
         month: `Tháng ${item._id}`,
         revenue: item.revenue,
     }));
 
-    // Top selling products columns
     const topProductColumns = [
         {
             title: 'Tên sản phẩm',
@@ -96,19 +94,16 @@ function ManagerStatistical() {
         },
     ];
 
-    // Format category data for pie chart
     const categoryData = statistical.products.byCategory.map((item) => ({
         type: item._id,
         value: item.count,
     }));
 
-    // Format status data for pie chart
     const orderStatusData = statistical.orders.byStatus.map((item) => ({
         type: formatStatus(item._id),
         value: item.count,
     }));
 
-    // Best rated products
     const bestRatedColumns = [
         {
             title: 'Sản phẩm',
@@ -134,7 +129,6 @@ function ManagerStatistical() {
         },
     ];
 
-    // Đảm bảo luôn có dữ liệu của 7 ngày theo chuẩn UTC để khớp với Database
     const ensureSevenDaysData = () => {
         const now = new Date();
 
@@ -383,7 +377,6 @@ function ManagerStatistical() {
     );
 }
 
-// Helper functions
 function formatStatus(status) {
     switch (status) {
         case 'pending':

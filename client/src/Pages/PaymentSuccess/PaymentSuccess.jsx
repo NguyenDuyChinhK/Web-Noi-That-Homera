@@ -151,7 +151,14 @@ function PaymentSuccess() {
                     />
 
                     <Card className={cx('order-info')} title="Thông tin đơn hàng">
-                        <Descriptions bordered layout="horizontal" column={1} labelStyle={{ width: '150px' }}>
+                        <Descriptions
+                            bordered
+                            layout="horizontal"
+                            column={1}
+                            styles={{
+                                label: { width: '150px' },
+                            }}
+                        >
                             <Descriptions.Item label="Người nhận">{paymentInfo.fullName}</Descriptions.Item>
                             <Descriptions.Item label="Số điện thoại">{paymentInfo.phone}</Descriptions.Item>
                             <Descriptions.Item label="Địa chỉ">{paymentInfo.address}</Descriptions.Item>
